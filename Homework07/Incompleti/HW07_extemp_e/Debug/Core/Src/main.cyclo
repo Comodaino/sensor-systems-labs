@@ -1,0 +1,10 @@
+../Core/Src/main.c:81:1:HAL_I2C_MasterRxCpltCallback	6
+../Core/Src/main.c:112:1:HAL_TIM_PeriodElapsedCallback	2
+../Core/Src/main.c:124:5:main	1
+../Core/Src/main.c:178:6:SystemClock_Config	3
+../Core/Src/main.c:225:13:MX_I2C1_Init	2
+../Core/Src/main.c:259:13:MX_TIM2_Init	4
+../Core/Src/main.c:304:13:MX_USART2_UART_Init	2
+../Core/Src/main.c:335:13:MX_DMA_Init	1
+../Core/Src/main.c:359:13:MX_GPIO_Init	1
+../Core/Src/main.c:399:6:Error_Handler	1
