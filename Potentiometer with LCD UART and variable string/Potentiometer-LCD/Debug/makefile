@@ -60,8 +60,8 @@ all: main-build
 main-build: Homework\ 5\ uart.elf secondary-outputs
 
 # Tool invocations
-Homework\ 5\ uart.elf Homework\ 5\ uart.map: $(OBJS) $(USER_OBJS) C:\Users\soffi\OneDrive\ -\ Politecnico\ di\ Milano\SensorSystemProject\Homeworks\Homework05\HW05_A05_proj\Homework\ 5\ uart\STM32F401RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Homework 5 uart.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\soffi\OneDrive - Politecnico di Milano\SensorSystemProject\Homeworks\Homework05\HW05_A05_proj\Homework 5 uart\STM32F401RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Homework 5 uart.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Homework\ 5\ uart.elf Homework\ 5\ uart.map: $(OBJS) $(USER_OBJS) /home/comodino/git-dir/sensor-systems-labs/Potentiometer\ with\ LCD\ UART\ and\ variable\ string/Potentiometer-LCD/STM32F401RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Homework 5 uart.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/comodino/git-dir/sensor-systems-labs/Potentiometer with LCD UART and variable string/Potentiometer-LCD/STM32F401RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Homework 5 uart.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

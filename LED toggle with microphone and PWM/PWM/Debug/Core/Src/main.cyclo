@@ -4,4 +4,4 @@
 ../Core/Src/main.c:166:13:MX_TIM2_Init	6
 ../Core/Src/main.c:225:13:MX_USART2_UART_Init	2
 ../Core/Src/main.c:258:13:MX_GPIO_Init	1
-../Core/Src/main.c:308:6:Error_Handler	1
+../Core/Src/main.c:298:6:Error_Handler	1
