@@ -60,8 +60,8 @@ all: main-build
 main-build: play_song_TIM.elf secondary-outputs
 
 # Tool invocations
-play_song_TIM.elf play_song_TIM.map: $(OBJS) $(USER_OBJS) /home/comodino/STM32CubeIDE/workspace_1.16.0/play_song_TIM/STM32F401RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "play_song_TIM.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/comodino/STM32CubeIDE/workspace_1.16.0/play_song_TIM/STM32F401RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="play_song_TIM.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+play_song_TIM.elf play_song_TIM.map: $(OBJS) $(USER_OBJS) /home/comodino/git-dir/sensor-systems-labs/Play\ a\ song/play_song_TIM/STM32F401RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "play_song_TIM.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/comodino/git-dir/sensor-systems-labs/Play a song/play_song_TIM/STM32F401RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="play_song_TIM.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

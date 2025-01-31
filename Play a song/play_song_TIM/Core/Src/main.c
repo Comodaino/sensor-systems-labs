@@ -117,6 +117,7 @@ void set_note(int pulse){
 	    Error_Handler();
 	  }
 
+
 	  sConfigOC.OCMode = TIM_OCMODE_PWM1;
 	  sConfigOC.Pulse = pulse;
 	  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
@@ -128,6 +129,7 @@ void set_note(int pulse){
 	  {
 	    Error_Handler();
 	  }
+
 }
 
 void start_note(){
