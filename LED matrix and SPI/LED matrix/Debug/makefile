@@ -60,8 +60,8 @@ all: main-build
 main-build: Homework\ 09.elf secondary-outputs
 
 # Tool invocations
-Homework\ 09.elf Homework\ 09.map: $(OBJS) $(USER_OBJS) /home/comodino/STM32CubeIDE/workspace_1.16.0/Completo/Homework\ 09\ up/STM32F401RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Homework 09.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/comodino/STM32CubeIDE/workspace_1.16.0/Completo/Homework 09 up/STM32F401RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Homework 09.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Homework\ 09.elf Homework\ 09.map: $(OBJS) $(USER_OBJS) /home/comodino/git-dir/sensor-systems-labs/LED\ matrix\ and\ SPI/LED\ matrix/STM32F401RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Homework 09.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/comodino/git-dir/sensor-systems-labs/LED matrix and SPI/LED matrix/STM32F401RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Homework 09.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
