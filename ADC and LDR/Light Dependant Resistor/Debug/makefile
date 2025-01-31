@@ -60,8 +60,8 @@ all: main-build
 main-build: Homework06\ b.elf secondary-outputs
 
 # Tool invocations
-Homework06\ b.elf Homework06\ b.map: $(OBJS) $(USER_OBJS) /home/comodino/STM32CubeIDE/workspace_1.16.0/Homework\ 6/Homework06_cplt/STM32F401RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Homework06 b.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/comodino/STM32CubeIDE/workspace_1.16.0/Homework 6/Homework06_cplt/STM32F401RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Homework06 b.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -Wl,--start-group -lc -lm -Wl,--end-group
+Homework06\ b.elf Homework06\ b.map: $(OBJS) $(USER_OBJS) /home/comodino/git-dir/sensor-systems-labs/ADC\ and\ LDR/Light\ Dependant\ Resistor/STM32F401RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Homework06 b.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/comodino/git-dir/sensor-systems-labs/ADC and LDR/Light Dependant Resistor/STM32F401RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Homework06 b.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
