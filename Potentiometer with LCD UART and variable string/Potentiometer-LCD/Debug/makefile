@@ -34,34 +34,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := Homework 5 uart
+BUILD_ARTIFACT_NAME := Potentiometer-possibly-right
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-Homework\ 5\ uart.elf \
+Potentiometer-possibly-right.elf \
 
 MAP_FILES += \
-Homework\ 5\ uart.map \
+Potentiometer-possibly-right.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-Homework\ 5\ uart.list \
+Potentiometer-possibly-right.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: Homework\ 5\ uart.elf secondary-outputs
+main-build: Potentiometer-possibly-right.elf secondary-outputs
 
 # Tool invocations
-Homework\ 5\ uart.elf Homework\ 5\ uart.map: $(OBJS) $(USER_OBJS) /home/comodino/git-dir/sensor-systems-labs/Potentiometer\ with\ LCD\ UART\ and\ variable\ string/Potentiometer-LCD/STM32F401RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Homework 5 uart.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/comodino/git-dir/sensor-systems-labs/Potentiometer with LCD UART and variable string/Potentiometer-LCD/STM32F401RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Homework 5 uart.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Potentiometer-possibly-right.elf Potentiometer-possibly-right.map: $(OBJS) $(USER_OBJS) /home/comodino/git-dir/sensor-systems-labs/Potentiometer\ with\ LCD\ UART\ and\ variable\ string/Potentiometer-possibly-right/STM32F401RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Potentiometer-possibly-right.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/comodino/git-dir/sensor-systems-labs/Potentiometer with LCD UART and variable string/Potentiometer-possibly-right/STM32F401RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Potentiometer-possibly-right.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -70,14 +70,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-Homework\ 5\ uart.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "Homework 5 uart.list"
+Potentiometer-possibly-right.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "Potentiometer-possibly-right.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) Homework\ 5\ uart.elf Homework\ 5\ uart.list Homework\ 5\ uart.map Homework\\ 5\\ uart.elf default.size.stdout
+	-$(RM) Potentiometer-possibly-right.elf Potentiometer-possibly-right.list Potentiometer-possibly-right.map default.size.stdout
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
