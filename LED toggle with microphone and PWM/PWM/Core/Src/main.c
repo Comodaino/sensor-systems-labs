@@ -60,9 +60,9 @@ static void MX_TIM2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
-
-	//HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	(void)htim;
 }
 /* USER CODE END 0 */
 

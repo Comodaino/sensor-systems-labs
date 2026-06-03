@@ -63,19 +63,19 @@ static void MX_TIM2_Init(void);
 /* USER CODE BEGIN 0 */
 #define SAMPLE_RATE 3
 
-char matrix_string[100] = "%d %d %d %d\n\r%d %d %d %d\n\r%d %d %d %d\n\r%d %d %d %d\n\r-------\n\r";
-int j=0, k=0, h=0, len=0;
-int matrix[4][4] = {0};
+int j = 0, k = 0;
+int matrix[4][4]   = {0};
 int p_matrix[4][4] = {0};
-char keyboard[4][4] = {
+const char keyboard[4][4] = {
 		{'0','4','8','C'},
 		{'1','5','9','D'},
 		{'2','6','A','E'},
 		{'3','7','B','F'}
 };
 
-HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
-	if(htim == &htim2){
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if (htim == &htim2) {
 		matrix[j][0] = matrix[j][0] + !HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_12);
 		matrix[j][1] = matrix[j][1] + !HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
 		matrix[j][2] = matrix[j][2] + !HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_2);
@@ -163,8 +163,8 @@ int main(void)
 
 					p_matrix[i][j] = -1;
 					char buff_tmp[10];
-					int len = snprintf(buff_tmp, 10, "%c\n\r", keyboard[i][j]);
-					HAL_UART_Transmit_DMA(&huart2, buff_tmp, len);
+					int len = snprintf(buff_tmp, sizeof(buff_tmp), "%c\r\n", keyboard[i][j]);
+					HAL_UART_Transmit_DMA(&huart2, (uint8_t *)buff_tmp, len);
 				}
 			}
 		}

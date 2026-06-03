@@ -126,7 +126,6 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	}
-	HAL_ADC_Stop_IT(&hadc1);
   /* USER CODE END 3 */
 }
 
@@ -421,13 +420,14 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
+{
 	if (hadc == &hadc1) {
-		int conversion = HAL_ADC_GetValue(&hadc1);
-		int value_bar = round(80.0f * conversion / 4096.0f);
-		float voltage = conversion * 3.3 / 4096.0;
-		char string[64];
-		snprintf(string, sizeof(string),"Voltage: %.3f V\r\n", voltage);
+		uint32_t raw = HAL_ADC_GetValue(&hadc1);
+		float voltage  = raw * 3.3f / 4096.0f;
+		int value_bar  = (int)(80.0f * raw / 4096.0f);
+		char string[20];
+		snprintf(string, sizeof(string), "%.3f V", voltage);
 		lcd_clear();
 		lcd_println(string, 0);
 		lcd_drawBar(value_bar);

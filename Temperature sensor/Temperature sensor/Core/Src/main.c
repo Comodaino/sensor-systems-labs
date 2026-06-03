@@ -70,35 +70,28 @@ static void MX_TIM2_Init(void);
 /* USER CODE BEGIN 0 */
 
 uint8_t value[2];
-char output[18];
+char output[20];
 float temp;
-int times_called = 0;
 
-HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c){
-	if(hi2c = &hi2c1){
-		if(times_called == 0){
-			times_called = 1;
-			return HAL_OK;
+void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+	if (hi2c == &hi2c1) {
+		if (value[0] > 127) {
+			/* negative temperature: strip sign bit and apply two's complement offset */
+			uint16_t raw = ((value[0] & 0x7F) << 8) | value[1];
+			temp = -128.0f + raw / 256.0f;
+		} else {
+			temp = ((value[0] << 8) | value[1]) / 256.0f;
 		}
-		times_called=0;
-		if(value[0]>127){
-			value[0] = value[0] & 0b01111111;
-			temp = value[0]<<8 | value[1];
-			temp = -128 + temp/256.0f;
-		}else{
-			temp = value[0]<<8 | value[1];
-			temp = temp/256.0f;
-		}
-		snprintf(output, 100, "Temp:  %.3f C\r\n", temp);
-		HAL_UART_Transmit_DMA(&huart2, output, strlen(output));
+		int len = snprintf(output, sizeof(output), "Temp: %.2f C\r\n", temp);
+		HAL_UART_Transmit_DMA(&huart2, (uint8_t *)output, len);
 	}
 }
 
-HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
-	if(htim = &htim2){
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if (htim == &htim2)
 		HAL_I2C_Master_Receive_DMA(&hi2c1, LM75_ADDRESS_R, value, 2);
-		HAL_I2C_Master_Receive_DMA(&hi2c1, LM75_ADDRESS_R, value, 2);
-	}
 }
 
 /* USER CODE END 0 */
@@ -137,8 +130,8 @@ int main(void)
 	MX_I2C1_Init();
 	MX_TIM2_Init();
 	/* USER CODE BEGIN 2 */
+	/* LM75 pointer register defaults to 0x00 (temperature) at power-on */
 	HAL_TIM_Base_Start_IT(&htim2);
-	HAL_I2C_Master_Transmit_DMA(&hi2c1, LM75_ADDRESS_W, LM75_TEMP_ADDRESS, 1);
 	/* USER CODE END 2 */
 
 	/* Infinite loop */

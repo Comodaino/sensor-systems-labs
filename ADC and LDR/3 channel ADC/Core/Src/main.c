@@ -68,13 +68,16 @@ static void MX_TIM2_Init(void);
 uint16_t adc_dma_result[3];
 int adc_channel_count = sizeof(adc_dma_result)/sizeof(adc_dma_result[0]);
 char output[100];
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
-	float vpot = 3.3f * adc_dma_result[0] /4096.0f;
-	float vtemp = 3.3f * adc_dma_result[1] /4096.0f;
-	float vref = 3.3f * adc_dma_result[2] /4096.0f;
-	float temperature = ((vtemp - 0.76)/2.5) + 25;
-	snprintf(output, 100, "Potentiometer: %.3f V\r\nTemperature: %.3f C\r\nVRef: %.3f V\r\n",vpot, temperature, vref);
-	HAL_UART_Transmit_DMA(&huart2, output, strlen(output));
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
+{
+	float vpot        = 3.3f * adc_dma_result[0] / 4096.0f;
+	float vtemp       = 3.3f * adc_dma_result[1] / 4096.0f;
+	float vref        = 3.3f * adc_dma_result[2] / 4096.0f;
+	float temperature = ((vtemp - 0.76f) / 2.5f) + 25.0f;
+	int len = snprintf(output, sizeof(output),
+	                   "Potentiometer: %.3f V\r\nTemperature: %.1f C\r\nVRef: %.3f V\r\n",
+	                   vpot, temperature, vref);
+	HAL_UART_Transmit_DMA(&huart2, (uint8_t *)output, len);
 }
 
 

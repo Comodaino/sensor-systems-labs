@@ -93,16 +93,15 @@ int main(void)
   MX_DMA_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  char* frase= "Name Surname 2001\r\n";
-  	int length = strlen(frase);
+  const char *msg = "Name Surname 2001\r\n";
+  int msg_len = strlen(msg);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
-	  HAL_UART_Transmit_DMA(&huart2, frase, length);
+	  HAL_UART_Transmit_DMA(&huart2, (uint8_t *)msg, msg_len);
 	  HAL_Delay(1000);
 
     /* USER CODE END WHILE */

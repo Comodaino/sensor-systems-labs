@@ -91,32 +91,27 @@ int8_t buffer[LENGTH];
 char str[100];
 
 
-HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c){
-	if(hi2c == &hi2c1){
+void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+	if (hi2c == &hi2c1)
 		HAL_I2C_Master_Receive_DMA(&hi2c1, ADDRESS_READ, buffer, LENGTH);
+}
 
+void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+	if (hi2c == &hi2c1) {
+		float acc_x = buffer[0] / 64.0f;
+		float acc_y = buffer[2] / 64.0f;
+		float acc_z = buffer[4] / 64.0f;
+		int len = snprintf(str, sizeof(str), "X: %+.2f g Y: %+.2f g Z: %+.2f g\r\n", acc_x, acc_y, acc_z);
+		HAL_UART_Transmit_DMA(&huart2, (uint8_t *)str, len);
 	}
 }
 
-
-HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c){
-
-	if(hi2c == &hi2c1){
-		float acc_x = buffer[0] / 64.0;
-		float acc_y = buffer[2] / 64.0;
-		float acc_z = buffer[4] / 64.0;
-
-		int len = snprintf(str, 100, "X: %+.2f g Y: %+.2f g Z: %+.2f g\r\n", acc_x, acc_y, acc_z);
-		HAL_UART_Transmit_DMA(&huart2, str, len);
-
-	}
-}
-
-HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
-
-	if(htim == &htim2){
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if (htim == &htim2) {
 		uint8_t start_reg = X_REG;
-
 		HAL_I2C_Master_Transmit_DMA(&hi2c1, ADDRESS_WRITE, &start_reg, 1);
 	}
 }

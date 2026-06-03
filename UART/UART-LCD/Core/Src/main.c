@@ -61,8 +61,6 @@ static void MX_TIM2_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-int members_index;
-
  char *members[] = {"Riccardo","Alessio", "Sofia", "Anna", "Emma"};
 
  int length = sizeof(members)/sizeof(char*);
@@ -85,13 +83,14 @@ int members_index;
  }
  int counter = 1;
 
- void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *handler){
- 	if(handler == &htim2){
- 		  lcd_clear();
- 		  lcd_println(members[(counter + 1) % length], 1);
- 		  lcd_println(members[(counter ) % length], 0);
- 		  counter = (counter + 1)%length;
- 		  HAL_Delay(1000);
+ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+ {
+ 	if (htim == &htim2) {
+ 		lcd_clear();
+ 		lcd_println(members[(counter + 1) % length], 1);
+ 		lcd_println(members[counter % length], 0);
+ 		counter = (counter + 1) % length;
+ 		HAL_Delay(1000);
  	}
  }
 

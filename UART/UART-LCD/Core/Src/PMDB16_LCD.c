@@ -1,250 +1,193 @@
 #include "string.h"
-#include "stdio.h"
 #include "stm32f4xx_hal.h"
+#include "PMDB16_LCD.h"
 
-//Version 1.1
-//Fix buffer overflow when drawbar was called with a parameter equal to 80
-//Remove HAL_Delay functions to simplify the use of the LCD in interrupt callbacks
+// PMDB16 16x2 LCD driver — v1.2
+// 4-bit parallel interface for WH1602C on STM32F4 Discovery
+// v1.1: fix drawBar overflow at value=80; remove HAL_Delay from callbacks
+// v1.2: add minimum delay after lcd_clear
 
-//Version 1.2
-//Fixed missing minimum delay after lcd_clear command.
-
+// Custom bargraph character slots (CGRAM addresses 1-5)
 #define CHAR_1_5 0x01
 #define CHAR_2_5 0x02
 #define CHAR_3_5 0x03
 #define CHAR_4_5 0x04
 #define CHAR_5_5 0x05
 
-//  String to display
-char bar[16];
+// Bargraph bitmaps: 1/5 to 5/5 columns filled
+static const uint8_t CUSTOM_1_5[] = {0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10};
+static const uint8_t CUSTOM_2_5[] = {0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18};
+static const uint8_t CUSTOM_3_5[] = {0x1C,0x1C,0x1C,0x1C,0x1C,0x1C,0x1C,0x1C};
+static const uint8_t CUSTOM_4_5[] = {0x1E,0x1E,0x1E,0x1E,0x1E,0x1E,0x1E,0x1E};
+static const uint8_t CUSTOM_5_5[] = {0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F};
 
-// Bitmaps for custom characters
-uint8_t CUSTOM_1_5[] ={0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10};
-uint8_t CUSTOM_2_5[] ={0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18};
-uint8_t CUSTOM_3_5[] ={0x1C,0x1C,0x1C,0x1C,0x1C,0x1C,0x1C,0x1C};
-uint8_t CUSTOM_4_5[] ={0x1E,0x1E,0x1E,0x1E,0x1E,0x1E,0x1E,0x1E};
-uint8_t CUSTOM_5_5[] ={0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F};
+// LCD GPIO pins (STM32F4 Discovery / PMDB16 shield)
+#define LCD_RS    GPIOB, GPIO_PIN_2
+#define LCD_E     GPIOB, GPIO_PIN_1
+#define LCD_D4    GPIOB, GPIO_PIN_12
+#define LCD_D5    GPIOB, GPIO_PIN_13
+#define LCD_D6    GPIOB, GPIO_PIN_14
+#define LCD_D7    GPIOB, GPIO_PIN_15
+#define LCD_BL_ON GPIOA, GPIO_PIN_4
 
+// LCD controller commands
+#define LCD_CMD_CLEAR    0x01
+#define LCD_CMD_DISPLAY  0x08
+#define LCD_CMD_DISPLAY_ON 0x04
+#define LCD_CMD_SETDDRAM 0x80
 
-// LCD Pins
-#define LCD_RS GPIOB,GPIO_PIN_2
-#define LCD_E GPIOB,GPIO_PIN_1
-#define LCD_D4 GPIOB,GPIO_PIN_12
-#define LCD_D5 GPIOB,GPIO_PIN_13
-#define LCD_D6 GPIOB,GPIO_PIN_14
-#define LCD_D7 GPIOB,GPIO_PIN_15
-#define LCD_BL_ON GPIOA,GPIO_PIN_4
-
-//Microsecond delay functions. Credit:
-//https://deepbluembedded.com/stm32-delay-microsecond-millisecond-utility-dwt-delay-timer-delay/
-
-uint32_t DWT_Delay_Init(void)
+// Microsecond delay using DWT cycle counter
+// Credit: https://deepbluembedded.com/stm32-delay-microsecond-millisecond-utility-dwt-delay-timer-delay/
+static void DWT_Delay_Init(void)
 {
-    /* Disable TRC */
-    CoreDebug->DEMCR &= ~CoreDebug_DEMCR_TRCENA_Msk; // ~0x01000000;
-    /* Enable TRC */
-    CoreDebug->DEMCR |=  CoreDebug_DEMCR_TRCENA_Msk; // 0x01000000;
-
-    /* Disable clock cycle counter */
-    DWT->CTRL &= ~DWT_CTRL_CYCCNTENA_Msk; //~0x00000001;
-    /* Enable  clock cycle counter */
-    DWT->CTRL |=  DWT_CTRL_CYCCNTENA_Msk; //0x00000001;
-
-    /* Reset the clock cycle counter value */
+    CoreDebug->DEMCR &= ~CoreDebug_DEMCR_TRCENA_Msk;
+    CoreDebug->DEMCR |=  CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CTRL &= ~DWT_CTRL_CYCCNTENA_Msk;
+    DWT->CTRL |=  DWT_CTRL_CYCCNTENA_Msk;
     DWT->CYCCNT = 0;
-
-    /* 3 NO OPERATION instructions */
     __ASM volatile ("NOP");
     __ASM volatile ("NOP");
     __ASM volatile ("NOP");
-
-    /* Check if clock cycle counter has started */
-    if(DWT->CYCCNT)
-    {
-       return 0; /*clock cycle counter started*/
-    }
-    else
-    {
-      return 1; /*clock cycle counter not started*/
-    }
 }
 
-void DWT_Delay_us(volatile uint32_t au32_microseconds)
+static void DWT_Delay_us(volatile uint32_t us)
 {
-  uint32_t au32_initial_ticks = DWT->CYCCNT;
-  uint32_t au32_ticks = (HAL_RCC_GetHCLKFreq() / 1000000);
-  au32_microseconds *= au32_ticks;
-  while ((DWT->CYCCNT - au32_initial_ticks) < au32_microseconds-au32_ticks);
+    uint32_t start = DWT->CYCCNT;
+    uint32_t ticks = (HAL_RCC_GetHCLKFreq() / 1000000) * us;
+    while ((DWT->CYCCNT - start) < ticks - (HAL_RCC_GetHCLKFreq() / 1000000));
 }
 
-
-//  LCD code
-
-
-void lcd_enable(){
-	//HAL_GPIO_WritePin(LCD_E, GPIO_PIN_RESET);
-	//HAL_Delay(1);
-	//DWT_Delay_us(50);
-	HAL_GPIO_WritePin(LCD_E, GPIO_PIN_SET);  //pulse needs to be some clock cycles long, we are not in hurry right now
-	//HAL_Delay(1);
-	DWT_Delay_us(50);
-	HAL_GPIO_WritePin(LCD_E, GPIO_PIN_RESET);
-	//HAL_Delay(1);
-	DWT_Delay_us(50);
+static void lcd_enable(void)
+{
+    HAL_GPIO_WritePin(LCD_E, GPIO_PIN_SET);
+    DWT_Delay_us(50);
+    HAL_GPIO_WritePin(LCD_E, GPIO_PIN_RESET);
+    DWT_Delay_us(50);
 }
 
-//  write a nibble (4 bits)
-void lcd_write4(uint8_t word){
-		HAL_GPIO_WritePin(LCD_D4, (word & 0x01)?GPIO_PIN_SET:GPIO_PIN_RESET); //we AND the word and the mask. If it's true, we write GPIO_PIN_SET, else _RESET
-		HAL_GPIO_WritePin(LCD_D5, (word & 0x02)?GPIO_PIN_SET:GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(LCD_D6, (word & 0x04)?GPIO_PIN_SET:GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(LCD_D7, (word & 0x08)?GPIO_PIN_SET:GPIO_PIN_RESET);
-		lcd_enable();  //pulse the E line
+static void lcd_write4(uint8_t nibble)
+{
+    HAL_GPIO_WritePin(LCD_D4, (nibble & 0x01) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(LCD_D5, (nibble & 0x02) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(LCD_D6, (nibble & 0x04) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(LCD_D7, (nibble & 0x08) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    lcd_enable();
 }
 
-//  write a byte (8 bits)
-void lcd_write(uint8_t word){	
-		lcd_write4(word>>4); //we first write the upper nibble
-		lcd_write4(word);    //and then the lower nibble
+static void lcd_write(uint8_t byte)
+{
+    lcd_write4(byte >> 4);
+    lcd_write4(byte);
 }
 
-#define LCD_CLEAR_COMMAND 0x01
-#define DISPLAY_COMMAND 0x08
-#define BLINK_ON 0x01
-#define CURSOR_ON 0x02
-#define DISPLAY_ON 0x04
-#define LCD_SETDRAMADD 0x80
-uint8_t _display_ctrl = 0;
-
-//  send an instruction to the LCD
-void lcd_command(uint8_t byte){
-	HAL_GPIO_WritePin(LCD_RS, GPIO_PIN_RESET); //write an instruction -> RS must be low
-	lcd_write(byte);
+static void lcd_command(uint8_t byte)
+{
+    HAL_GPIO_WritePin(LCD_RS, GPIO_PIN_RESET);
+    lcd_write(byte);
 }
 
-void lcd_clear(){
-	lcd_command(LCD_CLEAR_COMMAND);
-	DWT_Delay_us(2000);
+static void lcd_data(uint8_t byte)
+{
+    HAL_GPIO_WritePin(LCD_RS, GPIO_PIN_SET);
+    lcd_write(byte);
 }
 
-//  send data to the LCD
-void lcd_data(uint8_t byte){
-	HAL_GPIO_WritePin(LCD_RS, GPIO_PIN_SET); //write data, not instruction -> RS must be high
-	lcd_write(byte);
+static void writeCustomChar(uint8_t slot, const uint8_t *map)
+{
+    slot &= 0x07;
+    lcd_command(0x40 | (slot << 3));
+    for (int i = 0; i < 8; i++)
+        lcd_data(map[i]);
 }
 
-//  set (x, y) position of the cursor
-void setCursor(uint8_t col, uint8_t row){
-	if ((col+1)*(row+1)<80){
-		lcd_command(LCD_SETDRAMADD|(col + 40*row)); //in the second row, address is offset by 40
-	}
+static void loadCustomChars(void)
+{
+    writeCustomChar(CHAR_1_5, CUSTOM_1_5);
+    writeCustomChar(CHAR_2_5, CUSTOM_2_5);
+    writeCustomChar(CHAR_3_5, CUSTOM_3_5);
+    writeCustomChar(CHAR_4_5, CUSTOM_4_5);
+    writeCustomChar(CHAR_5_5, CUSTOM_5_5);
 }
 
-//  print a string on the display, starting from the cursor position
-void lcd_print(char string[]){  //pointer to first char in the string
-	
-	int size = strlen(string);
-	
-	while (size--){
-		lcd_data(*string++);
-	}
+// --- Public API ---
+
+void lcd_clear(void)
+{
+    lcd_command(LCD_CMD_CLEAR);
+    DWT_Delay_us(2000);
 }
 
-void lcd_println(char string[], uint8_t row){
-	
-	char line[] = "                ";
-	
-	int size = strlen(string);
-	
-	if (size > 16)
-		size = 16;
-
-	while (size--){
-		line[size] = string[size];
-	}
-	setCursor(0, row);
-	lcd_print(line);
+void setCursor(uint8_t col, uint8_t row)
+{
+    if ((col + 1) * (row + 1) < 80)
+        lcd_command(LCD_CMD_SETDDRAM | (col + 40 * row));
 }
 
-void writeCustomChar(uint8_t address, uint8_t map[]){ //fill Character Generator RAM with custom symbols
-	address &= 0x7; //address must be 0 to 7
-	lcd_command(0x40 | (address <<3)); //Set CGRAM address + address shifted left by 3 bits to start writing first byte
-	for (int i = 0; i<8; i++){
-		lcd_data(map[i]);	
-	}
+void lcd_print(char *string)
+{
+    while (*string)
+        lcd_data(*string++);
 }
 
-void loadCustomChars(){ //write all custom characters to the LCD module memory
-	writeCustomChar(CHAR_1_5, CUSTOM_1_5);
-	writeCustomChar(CHAR_2_5, CUSTOM_2_5);
-	writeCustomChar(CHAR_3_5, CUSTOM_3_5);
-	writeCustomChar(CHAR_4_5, CUSTOM_4_5);
-	writeCustomChar(CHAR_5_5, CUSTOM_5_5);
+void lcd_println(char *string, uint8_t row)
+{
+    char line[17] = "                ";
+    int size = strlen(string);
+    if (size > 16)
+        size = 16;
+    for (int i = 0; i < size; i++)
+        line[i] = string[i];
+    setCursor(0, row);
+    lcd_print(line);
 }
 
-void lcd_drawBar(int value){ //draws a bar using custom characters and spaces
-	setCursor(0,1); //bar is placed in the bottom row
-
-	if (value>80)
-		value = 80;
-	int quotient = value / 5;
-	int modulo = value % 5;
-	
-	int i = 0;
-	
-	while (i<quotient){ //we write the required number of CHAR_5_5
-		bar[i] = CHAR_5_5;
-		i++;
-	}
-	if (i < 16){
-	if (modulo == 0) bar[i] = ' '; //then we either place a space
-	else {
-		bar[i] = CHAR_1_5 + modulo -1; //or the correct partial block
-	}
-	i++;
-	}
-	while (i<16){ //and we fill the remainder with spaces
-		bar[i] = ' ';
-		i++;
-	}
-	lcd_print(bar); //finally we write to the LCD
+void lcd_drawBar(int value)
+{
+    char bar[16];
+    if (value > 80) value = 80;
+    int full  = value / 5;
+    int frac  = value % 5;
+    int i = 0;
+    while (i < full)
+        bar[i++] = CHAR_5_5;
+    if (i < 16)
+        bar[i++] = (frac == 0) ? ' ' : (CHAR_1_5 + frac - 1);
+    while (i < 16)
+        bar[i++] = ' ';
+    setCursor(0, 1);
+    lcd_print(bar);
 }
 
-void lcd_initialize(){  //initialize WH1602C LCD module in 4 bit mode, page 25
-
-	HAL_Delay(50);  //wait >40 ms as per datasheet
-	HAL_GPIO_WritePin(LCD_RS, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LCD_E, GPIO_PIN_RESET);
-	//LCD WritePIn is hard-wired low as per board schematic
-	DWT_Delay_Init();
-	//Magic reset sequence
-	lcd_write4(0x03);  //4-bit mode
-	HAL_Delay(5);
-	lcd_write4(0x03);
-	HAL_Delay(5);
-	lcd_write4(0x03);
-	HAL_Delay(5);
-	lcd_write4(0x02); //Set 4-bit mode
-	lcd_write(0x28); //4bit, 2 lines, 5x8 font
-	HAL_Delay(5);
-	lcd_write(0x08); //display off;
-	lcd_write(LCD_CLEAR_COMMAND); 			 //display clear;
-	HAL_Delay(5);
-	lcd_write(0x06); //entry mode set: increment
-	HAL_GPIO_WritePin(LCD_BL_ON, GPIO_PIN_SET);  //enable backlight
-	//_display_ctrl = DISPLAY_COMMAND|DISPLAY_ON|CURSOR_ON|BLINK_ON;
-	_display_ctrl = DISPLAY_COMMAND|DISPLAY_ON;
-	lcd_write(_display_ctrl); //set as above
-	lcd_write(0x02); //go home
-	HAL_Delay(2);
-	loadCustomChars();
-
+void lcd_initialize(void)
+{
+    HAL_Delay(50);
+    HAL_GPIO_WritePin(LCD_RS, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(LCD_E,  GPIO_PIN_RESET);
+    DWT_Delay_Init();
+    // HD44780 reset sequence (4-bit mode entry)
+    lcd_write4(0x03); HAL_Delay(5);
+    lcd_write4(0x03); HAL_Delay(5);
+    lcd_write4(0x03); HAL_Delay(5);
+    lcd_write4(0x02);
+    lcd_write(0x28);           // 4-bit, 2 lines, 5x8 font
+    HAL_Delay(5);
+    lcd_write(0x08);           // display off
+    lcd_write(LCD_CMD_CLEAR);  // clear display
+    HAL_Delay(5);
+    lcd_write(0x06);           // entry mode: increment, no shift
+    lcd_write(LCD_CMD_DISPLAY | LCD_CMD_DISPLAY_ON);
+    lcd_write(0x02);           // return home
+    HAL_Delay(2);
+    loadCustomChars();
+    HAL_GPIO_WritePin(LCD_BL_ON, GPIO_PIN_SET);
 }
 
-void lcd_backlight_ON(){
-	HAL_GPIO_WritePin(LCD_BL_ON, GPIO_PIN_SET);
+void lcd_backlight_ON(void)
+{
+    HAL_GPIO_WritePin(LCD_BL_ON, GPIO_PIN_SET);
 }
 
-void lcd_backlight_OFF(){
-	HAL_GPIO_WritePin(LCD_BL_ON, GPIO_PIN_RESET);
+void lcd_backlight_OFF(void)
+{
+    HAL_GPIO_WritePin(LCD_BL_ON, GPIO_PIN_RESET);
 }

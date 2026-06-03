@@ -77,18 +77,19 @@ int vldr = 0;
 float mean = 0.0f;
 float res = 0.0f;
 float lux = 0.0f;
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
-    // In the correction Villa said to compute here sum and avg
-	vldr = vldr + (int)adc_dma_result;
-	mean = 3.3f * vldr /4096000;
-	res =(mean * 100000)/(3.3f - mean);
-	lux = 10 * pow(100000/res,1.25f);
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
+{
+	vldr += (int)adc_dma_result;
+	mean = 3.3f * vldr / 4096000.0f;
+	res  = (mean * 100000.0f) / (3.3f - mean);
+	lux  = 10.0f * powf(100000.0f / res, 1.25f);
 }
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-	if(htim == &htim3){
-		snprintf(output, 100, "Lux: %.5f\r\n", lux);
-		HAL_UART_Transmit_DMA(&huart2, output, strlen(output));
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if (htim == &htim3) {
+		int len = snprintf(output, sizeof(output), "Lux: %.2f\r\n", lux);
+		HAL_UART_Transmit_DMA(&huart2, (uint8_t *)output, len);
 		vldr = 0;
 	}
 }

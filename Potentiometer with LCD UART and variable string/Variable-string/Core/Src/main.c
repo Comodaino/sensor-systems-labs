@@ -60,12 +60,11 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-char buff='\0';
-char buff_str[33]= {" "};
+char buff = '\0';
+char buff_str[33] = {" "};
 char buff_h[17] = {" "};
 char buff_l[17] = {" "};
 int buff_index = 0;
-int reset = 0;
 
 void print_string(){
 	strncpy(buff_h, buff_str, 16);

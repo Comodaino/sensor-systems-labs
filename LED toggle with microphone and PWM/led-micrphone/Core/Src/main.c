@@ -57,8 +57,10 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
-	if(GPIO_Pin == GPIO_PIN_8) HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if (GPIO_Pin == GPIO_PIN_8)
+		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
 }
 /* USER CODE END 0 */
 

@@ -93,35 +93,9 @@ uint8_t write_buffer[2];
 int8_t buffer[LENGTH];
 char str[100];
 uint8_t state = 0;
-int start = 0;
-int count = 0;
 
-HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c) {
-	if (hi2c == &hi2c1){
-		ProcessTick();
-	}
-}
-
-
-HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c){
-
-	if(hi2c == &hi2c1){
-		float acc_x = buffer[0] / 64.0;
-		float acc_y = buffer[2] / 64.0;
-		float acc_z = buffer[4] / 64.0;
-
-		int len = snprintf(str, 100, "X: %+.2f Y: %+.2f Z: %+.2f\r\n", acc_x, acc_y, acc_z);
-		HAL_UART_Transmit_DMA(&huart2, str, len);
-	}
-}
-
-HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
-	if(htim == &htim2){
-		ProcessTick();
-	}
-}
-
-ProcessTick() {
+void ProcessTick(void)
+{
 	switch (state) {
 	case 0:
 		write_buffer[0] = CTRL_REG1;
@@ -156,6 +130,29 @@ ProcessTick() {
 		--state;
 		break;
 	}
+}
+
+void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+	if (hi2c == &hi2c1)
+		ProcessTick();
+}
+
+void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+	if (hi2c == &hi2c1) {
+		float acc_x = buffer[0] / 64.0f;
+		float acc_y = buffer[2] / 64.0f;
+		float acc_z = buffer[4] / 64.0f;
+		int len = snprintf(str, sizeof(str), "X: %+.2f Y: %+.2f Z: %+.2f\r\n", acc_x, acc_y, acc_z);
+		HAL_UART_Transmit_DMA(&huart2, (uint8_t *)str, len);
+	}
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if (htim == &htim2)
+		ProcessTick();
 }
 
 

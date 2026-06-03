@@ -92,18 +92,14 @@ uint8_t data[SIZE];
 int counter = 0;
 int flag = 0;
 
-HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
-	if(htim == &htim2){
-		if(flag == 0){
-			data[0] = sym_c[counter].r;
-			data[1] = sym_c[counter].c;
-		}else{
-			data[0] = sym_p[counter].r;
-			data[1] = sym_p[counter].c;
-		}
-		HAL_SPI_Transmit_DMA(&hspi1, &data, SIZE);
-	}
-	if(htim == &htim3){
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if (htim == &htim2) {
+		const struct symbol_s *sym = (flag == 0) ? sym_c : sym_p;
+		data[0] = sym[counter].r;
+		data[1] = sym[counter].c;
+		HAL_SPI_Transmit_DMA(&hspi1, data, SIZE);
+	} else if (htim == &htim3) {
 		flag = !flag;
 	}
 }

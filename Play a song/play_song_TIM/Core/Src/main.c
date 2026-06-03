@@ -154,17 +154,18 @@ void stop_note(){
 }
 
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
-	if(GPIO_Pin == GPIO_PIN_8 && playing == 0) {
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if (GPIO_Pin == GPIO_PIN_8 && playing == 0) {
 		playing = 1;
 		start_note();
 	}
 }
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *handler){
-	if(handler == &htim2 && playing == 1){
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if (htim == &htim2 && playing == 1)
 		stop_note();
-	}
 }
 
 

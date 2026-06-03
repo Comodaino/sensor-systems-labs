@@ -350,15 +350,15 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
+{
 	if (hadc == &hadc1) {
-		int conversion = HAL_ADC_GetValue(&hadc1);
-		float voltage = conversion * 3.3 / 4096.0;
-		char string[64];
-		int length = snprintf(string, sizeof(string),"Voltage: %.3f V\r\n", voltage);
-		HAL_UART_Transmit_DMA(&huart2, string, length);
+		uint32_t raw  = HAL_ADC_GetValue(&hadc1);
+		float voltage = raw * 3.3f / 4096.0f;
+		char string[24];
+		int len = snprintf(string, sizeof(string), "Voltage: %.3f V\r\n", voltage);
+		HAL_UART_Transmit_DMA(&huart2, (uint8_t *)string, len);
 	}
-
 }
 
 /* USER CODE END 4 */
